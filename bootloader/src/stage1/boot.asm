@@ -1,50 +1,24 @@
-org 0x7c00
+org 0x7C00
 bits 16
 
-%define ENDL 0x0d, 0x0a
+%define ENDL 0x0D, 0x0A
 
-jmp short start
-nop
-
-bdb_oem:					db "MSWIN4.1"
-bdb_bytes_per_sector:		dw 512
-bdb_sectors_per_cluster:	db 1
-bdb_reserved_sectors:		dw 1
-bdb_fat_count:				db 2
-bdb_dir_entries_count:		dw 0e0h
-bdb_total_sectors:			dw 2880
-bdb_media_descriptor_type:	db 0f0h
-bdb_sectors_per_fat:		dw 9
-bdb_sectors_per_track:		dw 18
-bdb_heads:					dw 2
-bdb_hidden_sectors:			dd 0
-bdb_large_sector_count:		dd 0
-
-ebr_drive_number:			db 0
-							db 0
-ebr_signature:				db 29h
-ebr_volume_id:				db 12h, 34h, 56h, 78h
-ebr_volume_label:			db "MRCRYBOOT  "
-ebr_system_id:				db "FAT12   "
-
-start:
+main:
 	mov ax, 0
-	mov dx, ax
+	mov ds, ax
 	mov es, ax
 
 	mov ss, ax
-	mov sp, 0x7c00
+	mov sp, 0x7C00
 
 	push es
 	push word .after
 	retf
 
-.after:	
+.after:
+	mov [drive_number], dl
 
-	mov [ebr_drive_number], dl
-
-
-	mov si, msg_hello
+	mov si, msg_loading
 	call puts
 
 	push es
@@ -53,168 +27,62 @@ start:
 	jc disk_error
 	pop es
 
-	and cl, 0x3f
-	xor ch, ch
-	mov [bdb_sectors_per_track], cx
-
-	inc dh
-	mov [bdb_heads], dh
-
-	mov ax, [bdb_sectors_per_fat]
-	mov bl, [bdb_fat_count]
-	xor bh, bh
-	mul bx
-	add ax, [bdb_reserved_sectors]
-	push ax
-
-	mov ax, [bdb_sectors_per_fat]
-	shl ax, 5
-	xor dx, dx
-	div word [bdb_bytes_per_sector]
-
-	test dx, dx
-	jz .root_dir_after
-	inc ax
-
-.root_dir_after:
-	mov cl, al
-	pop ax
-	mov dl, [ebr_drive_number]
-	mov bx, buffer
+	mov ax, 0x01
+	mov dl, [drive_number]
+	mov cl, 32
+	mov bx, 0x8E00
 	call disk_read
 
-	xor bx, bx
-	mov di, buffer
+	mov si, msg_done
+	call puts
 
-.search_stage2:
-	mov si, file_stage2
-	mov cx, 11
-	push di
-	repe cmpsb
-	pop di
-	je .found_stage2
-
-	add di, 32
-	inc bx
-	cmp bx, [bdb_dir_entries_count]
-	jl .search_stage2
-
-	jmp disk_error
-
-.found_stage2:
-	mov ax, [di + 26]
-	mov [stage2_cluster], ax
-
-	mov ax, [bdb_reserved_sectors]
-	mov bx, buffer
-	mov cl, [bdb_sectors_per_fat]
-	mov dl, [ebr_drive_number]
-	call disk_read
-
-	mov bx, STAGE2_LOAD_SEGMENT
-	mov es, bx
-	mov bx, STAGE2_LOAD_OFFSET
-
-.load_stage2_loop:
-	mov ax, [stage2_cluster]
-	add ax, 31
-
-	mov cl, 1
-	mov dl, [ebr_drive_number]
-	call disk_read
-
-	add bx, [bdb_bytes_per_sector]
-
-	mov ax, [stage2_cluster]
-	mov cx, 3
-	mul cx
-	mov cx, 2
-	div cx
-
-	mov si, buffer
-	add si, ax
-	mov ax, [ds:si]
-
-	or dx, dx
-	jz .even
-
-.odd:
-	shr ax, 4
-	jmp .next_cluster_after
-
-.even:	
-	and ax, 0x0fff
-
-.next_cluster_after:
-	cmp ax, 0x0ff8
-	jae .read_finish
-
-	mov [stage2_cluster], ax
-	jmp .load_stage2_loop
-
-.read_finish:	
-	mov dl, [ebr_drive_number]
-	mov ax, STAGE2_LOAD_SEGMENT
-	mov ds, ax
-	mov es, ax
-
-	jmp STAGE2_LOAD_SEGMENT:STAGE2_LOAD_OFFSET
-
-	jmp wait_key_reboot
+	jmp 0x8E00
 
 	cli
 	hlt
-
-disk_error:
-	mov si, msg_read_fail
-	call puts
-	jmp wait_key_reboot
-
-wait_key_reboot:
-	mov ah, 0
-	int 16h
-	jmp 0FFFFh:0
 
 .halt:
 	cli
 	hlt
 
+; --> si: Pointer to the string to print
 puts:
 	push si
 	push ax
+	push bx
 
 .loop:
 	lodsb
 	or al, al
 	jz .done
 
-	mov ah, 0x0e
+	mov ah, 0x0E
 	int 0x10
 
 	jmp .loop
 
 .done:
+	pop bx
 	pop ax
 	pop si
 	ret
 
 ; --> ax: LBA address
 ; <-- cx bits 0 - 5: Sector
-; <-- cx bits 5 - 15: Cylinder
-; <-- dh: Head
-
+; <-- cx bits 6 - 15: Cylinder
+; <-- dh: head
 lba_to_chs:
 	push ax
 	push dx
 
 	xor dx, dx
-	div word [bdb_sectors_per_track]
+	div word [sectors_per_track]
 
 	inc dx
 	mov cx, dx
 
 	xor dx, dx
-	div word [bdb_heads]
+	div word [heads]
 
 	mov dh, dl
 	mov ch, al
@@ -229,73 +97,72 @@ lba_to_chs:
 ; --> ax: LBA address
 ; --> cl: Number of sectors to read
 ; --> dl: Drive number
-; --> es:bx: Memory address where to store read data
-
+; --> es:bx Pointer where to store read data
 disk_read:
-	push ax
-	push bx
-	push cx
-	push dx
-	push di
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
 
-	push cx
-	call lba_to_chs
-	pop ax
-
-	mov ah, 02h
-	mov di, 3
+    push cx
+    call lba_to_chs
+    pop ax
+    
+    mov ah, 02h
+    mov di, 3
 
 .retry:
-	pusha
-	stc 
+    pusha
+	stc
 	int 13h
 	jnc .done
 
-	popa
-	call disk_reset
+    popa
+    call disk_reset
 
-	dec di
-	test di, di
-	jnz .retry
+    dec di
+    test di, di
+    jnz .retry
 
-.read_fail:
+.fail:
 	jmp disk_error
 
 .done:
-	popa
+    popa
 
-	pop di
-	pop dx
-	pop cx
-	pop bx
-	pop ax
-
-	ret
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    ret
 
 ; --> dl: Drive number
-
 disk_reset:
-	pusha
-	mov ah, 0
-	stc
-	int 13h
-	jc disk_error
-	popa
+    pusha
+    mov ah, 0
+    stc
+    int 13h
+    jc disk_error
+    popa
+    ret
+
+disk_error:
+	mov si, msg_disk_error
+	call puts
 	ret
 
-msg_hello: db "OK", ENDL, 0
-msg_read_fail: db "E1", ENDL, 0
+msg_loading: db "Loading...", ENDL, 0
+msg_done: db "Entering stage 2", ENDL, 0
+msg_disk_error: db "Disk error", ENDL, 0
 
-file_stage2: db "STAGE2  BIN"
+sectors_per_track: dw 18
+heads: dw 2
 
-stage2_cluster: dw 0
+drive_number: db 0
 
-STAGE2_LOAD_SEGMENT equ 0x2000
-STAGE2_LOAD_OFFSET equ 0
-
-;times 510-($-$$) db 0
-;dw 0aa55h
-
-times 440-($-$$) db 0
+times 510-($-$$) db 0
+dw 0AA55h
 
 buffer:

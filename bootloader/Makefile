@@ -4,11 +4,14 @@ ASM = nasm
 
 image: build/image.img
 
-build/image.img: stage1 stage2
+build/image.img: stage1 stage2 kernel
 	dd if=/dev/zero of=build/image.img  bs=512 count=2880
-	mkfs.fat -F 12 -n "NBOS" build/image.img
+	#mkfs.fat -F 12 -n "NBOS" build/image.img
 	dd if=build/stage1.bin of=build/image.img conv=notrunc
-	mcopy -i build/image.img build/stage2.bin "::stage2.bin"
+	dd if=build/stage2.bin of=build/image.img conv=notrunc oflag=seek_bytes seek=512
+	dd if=kernel-test/kernel.bin of=build/image.img conv=notrunc oflag=seek_bytes seek=1024
+	#mcopy -i build/image.img build/stage2.bin "::KERNEL"
+	#mcopy -i build/image.img kernel.bin "::KERNEL"
 
 stage1: build/stage1.bin
 
@@ -20,5 +23,9 @@ stage2: build/stage2.bin
 build/stage2.bin:
 	$(ASM) src/stage2/main.asm -f bin -o build/stage2.bin
 
+kernel: build/kernel.bin
+
+build/kernel.bin:
+	$(ASM) src/kernel.asm -f bin -o build/kernel.bin
 clean:
 	rm -rf build/*
