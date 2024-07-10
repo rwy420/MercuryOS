@@ -1,5 +1,9 @@
-kernel_clean:
+clean:
 	cd kernel && make clean
+	cd bootloader && make clean
 
-kernel_iso:
-	cd kernel && make mercury.iso
+image:
+	cd kernel && make kernel.bin
+	cp kernel/kernel.bin bootloader
+	cd bootloader && make
+	mv bootloader/build/image.img ./mercury_image.img

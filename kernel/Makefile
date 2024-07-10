@@ -47,18 +47,6 @@ build/%.o: asm/%.asm
 kernel.bin: linker.ld $(OBJECTS)
 	ld $(LDPARAMS) -T $< -o $@ $(OBJECTS)
 
-mercury.iso: kernel.bin
-	mkdir -p iso/boot/grub
-	cp $< iso/boot/
-	echo "set timeout=0" >> iso/boot/grub/grub.cfg
-	echo "set default=0" >> iso/boot/grub/grub.cfg
-	echo 'menuentry "Mercury" {' >> iso/boot/grub/grub.cfg
-	echo "	multiboot /boot/kernel.bin" >> iso/boot/grub/grub.cfg
-	echo "	boot" >> iso/boot/grub/grub.cfg
-	echo "}" >> iso/boot/grub/grub.cfg
-	grub-mkrescue --output=$@ iso
-	rm -rf iso
-
 clean:
 	rm -rf ./build/*
 	rm kernel.bin

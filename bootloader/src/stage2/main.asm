@@ -9,7 +9,7 @@ entry:
 	mov ds, ax
 	mov es, ax
 	mov ss, ax
-	;mov sp, 0x7E00
+
 	mov sp, 0x8E00
 
 	mov si, stage2_message
@@ -24,24 +24,18 @@ entry:
 	or al, 1
 	mov cr0, eax
 
-	;call gdt_reload_segments
 
-	;jmp dword 08h:9000h ; kernel entry
-	;call dword 08h:9000h
 	jmp dword 8h:.pmode
 
 .pmode:
 	[bits 32]
 
-	;mov ebp, 0xA000
-	;mov esp, 0x10000
-	;mov esp, ebp
+
 
 	mov ax, 0x10
 	mov ds, ax
 	mov ss, ax
 
-	;jmp 8h:9000h
 	jmp 8h:0xA000
 
 	cli 

@@ -7,11 +7,10 @@ kernel_physical_start = . - 0xC0000000;
 
 SECTIONS
 {
-	. = 0x00100000;
+	. = 0xA000;
 
 	.text ALIGN(0x1000) :
 	{
-		*(.multiboot)
 		*(.text*)
 		*(.rodata)
 	}
