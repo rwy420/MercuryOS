@@ -5,4 +5,6 @@
 
 void memset(uint8_t* destination, uint8_t value, uint32_t length);
 
+void print_memory_info();
+
 #endif

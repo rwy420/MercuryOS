@@ -1,4 +1,3 @@
-#include "driver/driver.h"
 #include <driver/ps2/ps2keyboard.h>
 
 #define DATA_PORT 0x60
@@ -24,5 +23,4 @@ void ps2_kb_disable()
 void ps2_kb_handle_interrupt()
 {
 	uint8_t key = inb(DATA_PORT);
-
 }

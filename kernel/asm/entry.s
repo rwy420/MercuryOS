@@ -1,17 +1,13 @@
-.extern KernelMain
+.extern kernel_main
 
-.extern kernel_virtual_start
-.extern kernel_virtual_end
-.extern kernel_physical_start
-.extern kernel_physical_end
+.global entry
+.global stack
 
-.global boot
-
-boot:
+entry:
 	# Set stack pointer
 	mov $stack, %esp
 
-	call KernelMain
+	call kernel_main
 
 # Should not get to this point
 _halt:
@@ -20,6 +16,5 @@ _halt:
 	jmp _halt
 
 .section .bss
-
 .space 4*1024*1024 
 stack:

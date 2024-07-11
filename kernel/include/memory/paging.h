@@ -38,21 +38,7 @@ typedef struct page_directory
 	uint32_t physical_address;
 } page_directory_t;
 
-void init_paging();
-static void enable_paging();
-void page_fault();
-
-void* get_physical_address(void* virtual_address);
-void map_page(void* physical_address, void* virtual_address, uint32_t flags);
-void flush_tlb(unsigned long address);
-
-/*static void set_frame(uint32_t frame_address);
-static void clear_frame(uint32_t frame_address);
-static int32_t first_frame();
-void alloc_frame_identity(page_t* page, uint32_t is_kernel, uint32_t is_writable);
-void alloc_frame_virtual(page_t* page, uint32_t physical_address, uint32_t is_kernel, uint32_t is_writable);
-void free_frame(page_t* page);
-page_t* get_page(uint32_t address, uint8_t make, page_directory_t* directory);
-void switch_page_directory(page_directory_t* directory);*/
+void paging_init();
+void handle_page_fault();
 
 #endif

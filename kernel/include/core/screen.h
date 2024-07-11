@@ -4,6 +4,7 @@
 #include <core/types.h>
 
 void printf(string str);
-void printHex(uint8_t h);
+void clear_screen();
+void print_hex(uint8_t h);
 
 #endif
