@@ -46,9 +46,22 @@ void handle_irq_32();
 void handle_irq_33();
 void handle_irq_49();
 
+typedef struct
+{
+	uint32_t eax;
+	uint32_t ebx;
+	uint32_t ecx;
+	uint32_t edx;
+	uint32_t esi;
+	uint32_t edi;
+	uint32_t ebp;
+	uint32_t esp;
+	uint32_t error;
+} __attribute__((packed)) CPUState;
+
 typedef void (*isr_t)(uint32_t interrupt);
 
 void register_interrupt_handler(uint8_t n, isr_t handler);
-void interrupt_handler(uint32_t interrupt);
+void interrupt_handler(CPUState cpu_state, uint32_t interrupt);
 
 #endif 

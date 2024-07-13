@@ -5,7 +5,6 @@ extern interrupt_handler
 %macro no_error_interrupt_handler 1
 global handle_irq_%1
 handle_irq_%1:
-	;#push dword 0
 	push dword %1
 	jmp common_interrupt_handler
 %endmacro
@@ -18,27 +17,29 @@ handle_irq_%1:
 %endmacro
 
 common_interrupt_handler:
-	;#push eax
-	;#push ecx
-	;#push edx
-	;#push ebx
-	;#push esp
-	;#push ebp
-	;#push esi
-	;#push edi
+	push dword 0
+
+	push esp 
+	push ebp
+	push edi
+	push esi
+	push edx
+	push ecx
+	push ebx
+	push eax
 
 	call interrupt_handler
 
-	;#pop edi
-	;#pop esi
-	;#pop ebp
-	;#pop esp
-	;#pop ebx
-	;#pop edx
-	;#pop ecx
-	;#pop eax
+	pop eax
+	pop ebx
+	pop ecx
+	pop edx
+	pop esi
+	pop edi
+	pop ebp
+	pop esp
 
-	add esp, 4
+	add esp, 8
 
 	iret
 

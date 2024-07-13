@@ -1,4 +1,5 @@
 #include <hardware/interrupts.h>
+#include <core/screen.h>
 
 #define MASTER_COMMAND_PORT 0x20
 #define SLAVE_COMMAND_PORT 0xA0
@@ -56,14 +57,9 @@ void install_idt()
 	pic_remap(0x20, 0x28);
 }
 
-void interrupt_handler(/*__attribute__((unused)) struct cpu_state cpu, */uint32_t interrupt/*,
-		__attribute__((unused)) struct stack_state stack*/)
+void interrupt_handler(CPUState cpu_state, uint32_t interrupt)
 {
-
-	uint8_t interrupt_number_byte = interrupt;
-
-
-	if(interrupt_handers[interrupt_number_byte] != (isr_t) 0x00)
+	if(interrupt_handers[interrupt] != (isr_t) 0x00)
 	{
 		interrupt_handers[interrupt](interrupt);
 		pic_confirm(interrupt);

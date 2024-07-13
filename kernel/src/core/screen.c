@@ -65,3 +65,11 @@ void print_hex(uint8_t h)
 	foo[1] = hex[h & 0xF];
 	printf(foo);
 }
+
+void print_hex32(uint32_t h)
+{
+	print_hex((h >> 24) & 0xFF);
+	print_hex((h >> 16) & 0xFF);
+	print_hex((h >> 8) & 0xFF);
+	print_hex( h & 0xFF);
+}

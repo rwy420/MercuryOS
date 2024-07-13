@@ -6,5 +6,6 @@
 void printf(string str);
 void clear_screen();
 void print_hex(uint8_t h);
+void print_hex32(uint32_t h);
 
 #endif
