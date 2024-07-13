@@ -4,17 +4,17 @@ OUTPUT_ARCH(i386:i386)
 
 SECTIONS
 {
-	. = 0xA000;
+	. = 0x100000;
 
-	kernel_start = .;
+	kernel_start = 0x100000;
 
-	.text ALIGN(0x1000) :
+	.text BLOCK(4K) : ALIGN(4K)
 	{
 		*(.text*)
 		*(.rodata)
 	}
 
-	.data ALIGN(0x1000) :
+	.data BLOCK(4K) : ALIGN(4K)
 	{
 		start_ctors = .;
 		KEEP(*( .init_array ));
@@ -24,7 +24,7 @@ SECTIONS
 		*(.data*)
 	}
 
-	.bss ALIGN(0x1000) :
+	.bss BLOCK(4K) : ALIGN(4K)
 	{
 		*(.bss)
 		*stack(.bss)

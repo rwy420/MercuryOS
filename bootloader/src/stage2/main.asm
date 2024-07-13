@@ -30,16 +30,47 @@ entry:
 .pmode:
 	[bits 32]
 
-
-
 	mov ax, 0x10
 	mov ds, ax
 	mov ss, ax
 
-	jmp 8h:0xA000
+	; Kernel is located at 0xA000
+	; We want it at 0x100000
+
+	call 8h:relocate_kernel
+
+.enter_kernel:
+	jmp 8h:100000h
 
 	cli 
 	hlt
+
+relocate_kernel:
+	[bits 32]
+	push eax
+	push ebx
+
+	;mov eax, 0x100000
+	;mov ebx, 0xA000
+	xor ebx, ebx
+
+.reloc_loop:
+	[bits 32]
+
+	mov eax, [0xA000 + ebx]
+	mov [0x100000 + ebx], eax
+	add ebx, 4
+
+	cmp ebx, 32000
+	jne .reloc_loop
+
+.done:
+	[bits 32]
+	pop ebx
+	pop eax
+
+	ret
+
 
 ; --> si: Pointer to the string to print
 puts:
@@ -123,7 +154,8 @@ kbd_controller_enable:					equ 0xAE
 kbd_controller_read_control_output:		equ 0xD0
 kbd_controller_write_control_output:	equ 0xD1
 
-stage2_message:							db "Boot stage 2", 0x0A, 0x0A, 0
+stage2_message:							db "Boot stage 2", 0x0A, 0x0D, 0
+relocate_done_message:					db "Kernel relocated", 0x0A, 0x0D, 0
 
 g_gdt_start:
 	.null_descriptor:

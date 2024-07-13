@@ -5,7 +5,6 @@
 #include <driver/ps2/ps2keyboard.h>
 #include <hardware/interrupts.h>
 #include <hardware/pci.h>
-#include <memory/paging.h>
 #include <memory/heap.h>
 #include <memory/common.h>
 
@@ -29,6 +28,8 @@ void kernel_main()
 
 	kernel_start_address = (uint32_t) &kernel_start;
 	kernel_end_address = (uint32_t) &kernel_end;
+
+	kernel_end_address = ((kernel_end_address / 4096) + 1) * 4096;
 
 	kernel_size = kernel_end_address - kernel_start_address;
 	print_memory_info();
@@ -58,9 +59,6 @@ void kernel_main()
 	print_hex(heap_end & 0xFF);
 	printf("\n");
 
-	printf("<Mercury> Setting up memory paging\n");
-	paging_init();
-
 	uint8_t keyboard_driver = create_driver(0x21, "PS2-Keyboard", KEYBOARD, 
 			ps2_kb_handle_interrupt, ps2_kb_enable, 
 			ps2_kb_disable);
@@ -71,7 +69,8 @@ void kernel_main()
 	pci_enumerate_devices();
 	printf("<Mercury> PCI Initialization done\n");
 
-	malloc(0);
+	clear_screen();
+	printf("Welcome to MercuryOS!");
 
 	while(1);
 }
