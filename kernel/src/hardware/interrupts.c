@@ -6,7 +6,6 @@
 #define SLAVE_DATA_PORT 0xA1
 
 static isr_t interrupt_handers[256];
-registers_t registers;
 
 uint16_t hardware_interrupt_offset;
 

@@ -46,39 +46,9 @@ void handle_irq_32();
 void handle_irq_33();
 void handle_irq_49();
 
-typedef struct cpu_state
-{
-	uint32_t edi;
-	uint32_t esi;
-	uint32_t ebp;
-	uint32_t esp;
-	uint32_t ebx;
-	uint32_t edx;
-	uint32_t ecx;
-	uint32_t eax;
-} __attribute__((packed)) cpu_state_t; 
-
-typedef struct stack_state
-{
-	uint32_t int_no;
-	uint32_t error_code;
-	uint32_t eip;
-	uint32_t cs;
-	uint32_t eflags;
-	uint32_t useresp;
-	uint32_t ss;
-} __attribute__((packed)) stack_state_t;
-
-typedef struct registers
-{
-	uint32_t ds;
-	cpu_state_t cpu_registers;
-	stack_state_t stack_content;
-} registers_t;
-
 typedef void (*isr_t)(uint32_t interrupt);
 
 void register_interrupt_handler(uint8_t n, isr_t handler);
-void interrupt_handler(/*struct cpu_state cpu, */uint32_t interrupt/*, struct stack_state stack*/);
+void interrupt_handler(uint32_t interrupt);
 
 #endif 
