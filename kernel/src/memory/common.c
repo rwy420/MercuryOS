@@ -5,10 +5,13 @@ extern uint32_t kernel_start_address;
 extern uint32_t kernel_end_address;
 extern uint32_t kernel_size;
 
-void memset(uint8_t* destination, uint8_t value, uint32_t length)
+void* memset(void* buffer, uint8_t byte, uint32_t length)
 {
-	uint8_t* temp = (uint8_t*) destination;
-	for(; length != 0; length--) *temp++ = value;
+	uint8_t* pointer = (uint8_t*) buffer;
+
+	for(uint32_t i = 0; i < length; i++) pointer[i] = byte;
+
+	return buffer;
 }
 
 void print_memory_info()

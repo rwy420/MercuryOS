@@ -5,8 +5,9 @@
 #include <driver/ps2/ps2keyboard.h>
 #include <hardware/interrupts.h>
 #include <hardware/pci.h>
-#include <memory/heap.h>
+#include <memory/mem_manager.h>
 #include <memory/common.h>
+#include <memory/paging.h>
 
 extern uint8_t kernel_start;
 extern uint8_t kernel_end;
@@ -15,7 +16,7 @@ uint32_t kernel_start_address;
 uint32_t kernel_end_address;
 uint32_t kernel_size;
 
-uint32_t heap_end;
+uint32_t mem_manager_end;
 
 void kernel_main()
 {
@@ -33,31 +34,21 @@ void kernel_main()
 
 	kernel_size = kernel_end_address - kernel_start_address;
 	print_memory_info();
-	size_t heap = 10 * 1024 * 1024;
-	heap_init(kernel_end_address, heap);
-	heap_end = kernel_end_address + heap;
+	size_t mem_manager_size = 512 * 1024;
+	init_memory_manager(kernel_start_address - mem_manager_size - 0x10000, mem_manager_size);
+	init_memory_region(kernel_start_address - mem_manager_size - 0x10000, mem_manager_size);
 
-	printf("<Mercury> Heap size: 0x");
-	print_hex((heap >> 24) & 0xFF);
-	print_hex((heap >> 16) & 0xFF);
-	print_hex((heap >> 8) & 0xFF);
-	print_hex(heap & 0xFF);
+	printf("<Mercury> Block manager size: 0x");
+	print_hex((mem_manager_size >> 24) & 0xFF);
+	print_hex((mem_manager_size >> 16) & 0xFF);
+	print_hex((mem_manager_size >> 8) & 0xFF);
+	print_hex(mem_manager_size & 0xFF);
 	printf("\n");
 
-	void* allocated = malloc(1024);
-	printf("<Mercury> Heap start: 0x");
-	print_hex(((uint32_t) allocated >> 24) & 0xFF);
-	print_hex(((uint32_t) allocated >> 16) & 0xFF);
-	print_hex(((uint32_t) allocated >> 8) & 0xFF);
-	print_hex((uint32_t) allocated & 0xFF);
-	printf("\n");
+	printf("<Mercury> Setting up paging\n");
+	paging_enable();
 
-	printf("<Mercury> Heap End: 0x");
-	print_hex((heap_end >> 24) & 0xFF);
-	print_hex((heap_end >> 16) & 0xFF);
-	print_hex((heap_end >> 8) & 0xFF);
-	print_hex(heap_end & 0xFF);
-	printf("\n");
+	map_page((void*) 0xb8000, (void*)0xb8000);
 
 	uint8_t keyboard_driver = create_driver(0x21, "PS2-Keyboard", KEYBOARD, 
 			ps2_kb_handle_interrupt, ps2_kb_enable, 
@@ -70,7 +61,7 @@ void kernel_main()
 	printf("<Mercury> PCI Initialization done\n");
 
 	clear_screen();
-	printf("Welcome to MercuryOS!");
+	printf("Welcome to MercuryOS!\n");
 
 	while(1);
 }

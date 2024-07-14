@@ -4,9 +4,8 @@ OUTPUT_ARCH(i386:i386)
 
 SECTIONS
 {
-	. = 0x100000;
-
-	kernel_start = 0x100000;
+	. = 1M;
+	kernel_start = 1M;
 
 	.text BLOCK(4K) : ALIGN(4K)
 	{
