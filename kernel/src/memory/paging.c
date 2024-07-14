@@ -110,7 +110,7 @@ void paging_enable()
 	
 	for(uint32_t i = 0; i < 1024; i++) directory->entries[i] = 0x02;
 
-	page_table_t* table = (page_table_t*) alloc_blocks(1);
+	/*page_table_t* table = (page_table_t*) alloc_blocks(1);
 
 	page_table_t* table_3g = (page_table_t*) alloc_blocks(1);
 
@@ -145,11 +145,27 @@ void paging_enable()
 	pd_entry_t* entry2 = &directory->entries[PD_INDEX(0x00000000)];
 	SET_ATTRIBUTE(entry2, PDE_PRESENT);
 	SET_ATTRIBUTE(entry2, PDE_RW);
-	SET_FRAME(entry2, (uint32_t) table_3g);
+	SET_FRAME(entry2, (uint32_t) table_3g);*/
+
+	page_table_t* table = (page_table_t*) alloc_blocks(1);
+
+	for(uint32_t i = 0, frame = 0, virt = 0; i < 1024; i++, frame += PAGE_SIZE, virt += PAGE_SIZE)
+	{
+		pt_entry_t page = 0;
+		SET_ATTRIBUTE(&page, PTE_PRESENT);
+		SET_ATTRIBUTE(&page, PTE_RW);
+		SET_FRAME(&page, frame);
+
+		table->entries[PT_INDEX(virt)] = page;
+	}
+
+	pd_entry_t* entry = &directory->entries[PD_INDEX(0x00000000)];
+	SET_ATTRIBUTE(entry, PDE_PRESENT);
+	SET_ATTRIBUTE(entry, PDE_RW);
+	SET_FRAME(entry, (uint32_t) table);
 
 	set_page_directory(directory);
 
-	//__asm__ __volatile__ ("movl %CR0, %EAX; orl $0x80000001, %EAX; movl %EAX, %CR0");
 	__asm__ __volatile__ ("orl $0x80000011, %EAX; movl %EAX, %CR0");
 	
 	register_interrupt_handler(14, handle_page_fault);

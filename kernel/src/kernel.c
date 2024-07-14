@@ -48,8 +48,6 @@ void kernel_main()
 	printf("<Mercury> Setting up paging\n");
 	paging_enable();
 
-	map_page((void*) 0xb8000, (void*)0xb8000);
-
 	uint8_t keyboard_driver = create_driver(0x21, "PS2-Keyboard", KEYBOARD, 
 			ps2_kb_handle_interrupt, ps2_kb_enable, 
 			ps2_kb_disable);
